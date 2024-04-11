@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
 """
+Provides functionality for logging and filtering sensitive information
 """
 
 import re
 from typing import List
 import logging
 import csv
+import os
+import mysql.connector
 
 
 PII_FIELDS = ("email", "phone", "ssn", "password", "address")
@@ -64,3 +67,43 @@ def get_logger():
     logger.propagate = False
 
     return logger
+
+
+def get_db():
+    """Returns a connector to the MySQL database"""
+    # Retrive credentials from env variables or set default
+    username = os.getenv("PERSONAL_DATA_DB_USERNAME", "root")
+    password = os.getenv("PERSONAL_DATA_DB_PASSWORD", "")
+    host = os.getenv("PERSONAL_DATA_DB_HOST", "localhost")
+    db_name = os.getenv("PERSONAL_DATA_DB_NAME")
+
+    # Connect to the MySQL database
+    connection = mysql.connector.connect(
+        user=username,
+        password=password,
+        host=host,
+        database=db_name
+    )
+    
+    return connection
+
+
+def main():
+    """
+    Obtains a database connection using get_db and retreives all rows in the users table
+    Displays each row under a filtered format
+    """
+    logger = get_loger()
+    db = get_db()
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        filtered_row = filter_datum(PII_FIELDS, RedactingFormatter.REDACTION, str(row))
+        logger.info(filtered_row)
+
+
+if __name__ == "__main__":
+    main()
