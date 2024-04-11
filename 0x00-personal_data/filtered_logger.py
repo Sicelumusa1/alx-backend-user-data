@@ -15,8 +15,8 @@ import mysql.connector
 PII_FIELDS = ("email", "phone", "ssn", "password", "address")
 
 
-def filter_datum(fields: List[str], redaction: str, message: str, 
-                 separator: str=';') -> str:
+def filter_datum(fields: List[str], redaction: str, message: str,
+                 separator: str = ';') -> str:
     """
     Obfuscates the specified field in a log message
 
@@ -31,27 +31,41 @@ def filter_datum(fields: List[str], redaction: str, message: str,
     Returns:
         str: log message with specified fields
     """
-    return re.sub(r'(?:=^|;)(?:' + '|'.join(fields) + r')=[^;]*', lambda 
-                  match: match.group(0).split('=')[0] + '=' + redaction, 
+    return re.sub(r'(?:=^|;)(?:' + '|'.join(fields) + r')=[^;]*', lambda
+                  match: match.group(0).split('=')[0] + '=' + redaction,
                   message)
 
 
 class RedactingFormatter(logging.Formatter):
-    """ Redacting Formatter class
-        """
+    """
+    Redacting Formatter class
+
+    Attributes:
+        REDACTION (str): The string used for reducting sensitive info
+        FORMAT  (str): The format string for log messages
+        SEPARATOR (str): The separator charactor
+    """
 
     REDACTION = "***"
     FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
     SEPARATOR = ";"
 
     def __init__(self, fields: List[str]):
+        """
+        Initializes a RedactingFormatter object
+
+        Args:
+            fields (list): A list of strings representing the fields to redact
+        """
         super().__init__(self.FORMAT)
         self.fields = fields
 
     def format(self, record: logging.LogRecord) -> str:
         """Formats the log record with specified fields obfuscated"""
         message = super().format(record)
-        return filter_datum(self.fields, self.REDACTION, message, self.SEPARATOR)
+        return filter_datum(self.fields, self.REDACTION, message,
+                            self.SEPARATOR)
+
 
 def get_logger():
     """Returns a logging.logger object"""
@@ -88,10 +102,11 @@ def get_db():
 
 def main():
     """
-    Obtains a database connection using get_db and retreives all rows in the users table
+    Obtains a database connection using get_db and retreives all rows in
+    the users table
     Displays each row under a filtered format
     """
-    logger = get_loger()
+    logger = get_logger()
     db = get_db()
 
     cursor = db.cursor(dictionary=True)
@@ -99,7 +114,8 @@ def main():
     rows = cursor.fetchall()
 
     for row in rows:
-        filtered_row = filter_datum(PII_FIELDS, RedactingFormatter.REDACTION, str(row))
+        filtered_row = filter_datum(PII_FIELDS, RedactingFormatter.REDACTION,
+                                    str(row))
         logger.info(filtered_row)
 
 
