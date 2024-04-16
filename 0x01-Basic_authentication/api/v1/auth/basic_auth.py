@@ -51,7 +51,6 @@ class BasicAuth(Auth):
             # Invalid Base64 string
             return None
 
-
     def extract_user_credentials(self, decoded_base64_authorization_header: str) -> (str, str):
         """
         Extracts user email and password from the Base64 decoded value
@@ -78,11 +77,10 @@ class BasicAuth(Auth):
 
         return user_email, user_pwd
 
-
     def user_object_from_credentials(self, user_email: str, user_pwd: str) -> TypeVar('User'):
         """
         Returns the user instance based on email and password
-        
+
         Args:
             user_email (str): The email of the user
             user_pwd (str): password ot the user
@@ -98,7 +96,7 @@ class BasicAuth(Auth):
 
         # Search for the user in the database
         users = User.search({'email': user_email})
-        if  not users:
+        if not users:
             return None
 
         # Check if the password matches
@@ -107,7 +105,6 @@ class BasicAuth(Auth):
                 return user
 
         return None
-
 
     def current_user(self, request=None) -> TypeVar('User'):
         """

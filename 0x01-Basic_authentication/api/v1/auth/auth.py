@@ -15,7 +15,7 @@ class Auth:
 
         Args:
             path (str): Path of the request
-            excluded_paths (List[str]): List of the paths that are excluded 
+            excluded_paths (List[str]): List of the paths that are excluded
             from authentication
         Returns:
             bool: True if authentication is required. False otherwise
@@ -34,14 +34,13 @@ class Auth:
 
         return True
 
-
     def authorization_header(self, request=None) -> str:
         """
         Get the authentication header from the request
 
         Args:
             request: Flask request object
-        
+
         Returns:
             str: The authentication header value
         """
@@ -61,7 +60,7 @@ class Auth:
 
         Args:
             request: The flask request object
-        
+
         Returns:
             TypeVar('User'): the current user
         """
