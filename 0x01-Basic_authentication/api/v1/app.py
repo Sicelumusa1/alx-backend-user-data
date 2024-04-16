@@ -28,10 +28,10 @@ excluded_paths = ['/api/v1/status/', '/api/v1/unauthorized/', '/api/v1/forbidden
 
 @app.before_request
 def before_request():
+    """
+    Before request handler
+    """
     global auth
-
-    print(auth)
-    print(request.path)
 
     # If auth is None or request path is not in excluded path, do nothing
     if auth is None:
