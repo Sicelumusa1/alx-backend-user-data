@@ -68,9 +68,15 @@ class BasicAuth(Auth):
         if ':' not in decoded_base64_authorization_header:
             return None, None
 
-        # Split the decoded string into user email and password
-        user_email, user_password = decoded_base64_authorization_header.split(':', 1)
-        return user_email, user_password
+        # Split the decode header on the first occurrence of colon
+        parts = decoded_base64_authorization_header.split(':', 1)
+        if len(parts) != 2:
+            return None, None
+
+        user_email = parts[0]
+        user_pwd = parts[1]
+
+        return user_email, user_pwd
 
 
     def user_object_from_credentials(self, user_email: str, user_pwd: str) -> TypeVar('User'):
