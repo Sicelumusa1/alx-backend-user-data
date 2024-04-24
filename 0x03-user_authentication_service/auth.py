@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
 """
+Module that defines authentication methods
 """
 
 import bcrypt
 from db import DB
 from user import User
+import uuid
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from typing import Optional
 
 
 class Auth:
@@ -17,25 +20,6 @@ class Auth:
     def __init__(self):
         """Initilizes a database"""
         self._db = DB()
-
-
-    def _hash_password(self, password: str) -> bytes:
-        """
-        Hashes a password with a random salt using bcrypt
-
-        Args:
-            password (str): passwort to be hashed
-
-        Returns:
-            bytes: A salted hash of the password
-        """
-        # Generate a salt
-        salt = bcrypt.gensalt()
-
-        # Hash the password with the salt
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-
-        return hashed_password
 
     def register_user(self, email: str, password: str) -> User:
         """
@@ -61,3 +45,115 @@ class Auth:
             user = self._db.add_user(email, hashed_password.decode('utf-8'))
 
             return user
+
+    def _hash_password(self, password: str) -> bytes:
+        """
+        Hashes a password with a random salt using bcrypt
+
+        Args:
+            password (str): password to be hashed
+
+        Returns:
+            bytes: A salted hash of the password
+        """
+        # Generate a salt
+        salt = bcrypt.gensalt()
+
+        # Hash the password with the salt
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed_password
+
+    def valid_login(self, email: str, password: str) -> bool:
+        """
+        Validates if the email and password are valid
+
+        Args:
+            email (str): The user's email address
+            password (str): The plaintext password to hash
+
+        Returns:
+            bool: True if the email exists and the password matches
+        """
+        try:
+            # try to find user by email
+            user = self._db.find_user_by(email=email)
+
+            return bcrypt.checkpw(password.encode("utf-8"), user.hashed_password.encode("utf-8"))
+        except NoResultFound:
+            return False
+
+    def _generate_uuid(self) -> str:
+        """
+        Generate a new UUID and return its string representation
+
+        Returns:
+            str: A string prepresentation of a UUID
+        """
+        return str(uuid.uuid4())
+
+    def create_session(self, email: str) -> str:
+        """
+        Create a seeion for a user with the given email
+
+        Agrs:
+            email (str): email address of the user
+
+        Returns:
+            str: generated session ID
+
+        Raises:
+            ValueError: If no user is found with the given email
+        """
+        try:
+            user = self._db.find_user_by(email=email)
+        except NoResultFound:
+            raise ValueError(f"No user found with email: {email}")
+
+        # Generate a new UUID for the session
+        session_id = self._generate_uuid()
+
+        # Update the user's session_id in the database
+        self._db.update_user(user.id, session_id=session_id)
+
+        # Return the new session ID
+        return session_id
+
+    def get_user_from_session_id(self, session_id: str) -> Optional[User]:
+        """
+        Find a user by the given session_id
+
+        Args:
+            session_id (str): The session ID to look up
+
+        Returns:
+            User: The user associated with the session ID or None if
+            not found
+        """
+        if session_id is None:
+            return None
+
+        try:
+            # Try to find the user with the given session_id
+            user = self._db.find_user_by(session_id=session_id)
+            return user
+        except NoResultFound:
+            # If no user is found, return None
+            return None
+
+    def destroy_session(self, user_id: int) -> None:
+        """
+        Destroy the session for a given user_id
+
+        Args:
+            user_id (int): The ID of the user whose session should be
+            destroyed
+
+        Returns:
+            None
+        """
+        try:
+            user = self._db.find_user_by(id=user_id)
+
+            self._db.update_user(user_id, session_id=None)
+        except NoResultFound:
+            return
