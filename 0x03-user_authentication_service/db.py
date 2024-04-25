@@ -2,6 +2,7 @@
 
 """DB module to handle database operations
 """
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +12,10 @@ from sqlalchemy.exc import InvalidRequestError
 
 from user import Base, User
 
+# Set the SQLAlchemy logging level to WARNING or ERROR to reduce verbosity
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
+
 
 class DB:
     """DB class
@@ -19,7 +24,7 @@ class DB:
     def __init__(self) -> None:
         """Initialize a new DB instance
         """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
