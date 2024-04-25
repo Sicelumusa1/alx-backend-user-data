@@ -156,3 +156,60 @@ class Auth:
             self._db.update_user(user_id, session_id=None)
         except NoResultFound:
             return
+
+    def get_reset_password_token(self, email: str) -> str:
+        """
+        Get a reset password token for a user with the given email
+
+        Args:
+            email (str):Email address to find the user
+
+        Returns:
+            str: A UUID reset token
+
+        Raises:
+             ValueError: If no user with the give email is found
+        """
+        try:
+            # find user by email
+            user = self._db.find_user_by(email=email)
+
+            # Generate uiid for reset token
+            reset_token = _generate_uuid()
+
+            # Update the user's reset_token field in the db
+            user.reset_token = reset_token
+
+            # Commit the change to the db
+            self._db._session.commit()
+
+            return reset_token
+        except NoResultFound:
+            raise ValueError(f"No user found with email: {email}")
+
+    def update_password(self, reset_token: str, password: str) -> None:
+        """
+        Update the user's password using a reset token
+
+        Args:
+            reset_token (str): token used to identify the user
+            password (str): new plaintext password
+
+        Raises:
+            ValueError: If no user with the given reset token is found
+        """
+        try:
+            # find user by the reset token
+            user = self._db.find_user_by(reset_token=reset_token)
+
+            # Hash the new password
+            hashed_password = self._hash_password(password)
+
+            # Update both password and token
+            user.hashed_password = hashed_password.decode('utf-8')
+            user.reset_token = None
+
+            # Commit the changes to the db
+            self._db._session.commit()
+        except NoResultFound:
+            raise ValueError(f"No user found with reset token: {reset_token}")

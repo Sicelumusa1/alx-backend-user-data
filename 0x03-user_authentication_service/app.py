@@ -118,6 +118,45 @@ def profile():
         abort(403)
 
 
+@app.route("/reset_password", methods=["POST"])
+def reset_password():
+    """
+    Endpoint to generate a reset token for a given email
+    """
+    email = request.form.get("email")
+
+    if not email:
+        return jsonify("message": "email is required"), 400
+
+    try:
+        reset_token = AUTH.get_reset_password_token(email)
+
+        return jsonify({"email": user email, "reset_token": reset token}), 200
+    except ValueError:
+        return jsonify({"message": "email not registered"}), 403
+
+
+@app.route("/reset_password", methods=["PUT"])
+def update_password():
+    """
+    Endpoint to update the user's password
+    """
+    email = request.form.get("email")
+    reset_token = request.form.get("reset_token")
+    news_password = request.form.get("news_password")
+
+    # Ensure all required data is provided
+    if not email or not reset_token or not new_password:
+        return jsonify({"message": "All fields are required"}), 400
+
+    try:
+        AUTH.update_password(reset_token, new_password)
+
+        return jsonify({"email": email, "message": "Password updated"}), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 403
+
+
 # Start the Flask app on the specified host and port
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5000")
