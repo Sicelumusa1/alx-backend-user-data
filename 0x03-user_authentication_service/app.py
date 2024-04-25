@@ -23,7 +23,7 @@ def home():
 
 
 @app.route("/users", methods=["POST"])
-def register_user():
+def users():
     """
     A POST endpoint to register a new user
 
